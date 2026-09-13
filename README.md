@@ -34,22 +34,50 @@ unified-intel-platform/
 | World Monitor Frontend | `3000` | `http://localhost:5000/world/` |
 | God's Eye View Frontend | `4173` | `http://localhost:5000/gev/` |
 
-## Quickstart
+## Prerequisites
 
-Requires Node.js 24.x (>= 24.14.0) or 26.x and Git.
+- **Node.js** 24.x (>= 24.14.0) or 26.x
+- **npm** (comes with Node.js)
+- **Git**
+- A modern browser with **WebGL 2.0** support (Chrome / Edge recommended)
+
+## Quickstart (Fresh Setup)
 
 ```bash
-# 1. Clone both upstream repositories
-npm run clone:all
+# 1. Clone the repository
+git clone https://github.com/ajinkyachalke008/SIH-1-God-eyes-view-.git
+cd SIH-1-God-eyes-view-
 
-# 2. Install all dependencies across apps and root
-npm run install:all
+# 2. Install root dependencies
+npm install
 
-# 3. Start everything concurrently
+# 3. Install World Monitor dependencies
+npm install --prefix apps/worldmonitor
+
+# 4. Install God's Eye View dependencies
+npm install --prefix apps/gods-eye-view
+
+# 5. Start all services concurrently
 npm run dev:all
 ```
 
-Navigate to `http://localhost:5000` to access the Unified Console.
+Navigate to **http://localhost:5000** to access the Unified Console.
+
+| Page | URL |
+|------|-----|
+| 🏠 Unified Console | http://localhost:5000 |
+| 🌍 World Monitor | http://localhost:5000/world/ |
+| 👁️ God's Eye View | http://localhost:5000/gev/ |
+
+### One-Command Install (Alternative)
+
+```bash
+# Install everything at once
+npm run install:all
+
+# Start everything
+npm run dev:all
+```
 
 ### Standalone Usage
 
@@ -63,9 +91,42 @@ npm run dev:world
 npm run dev:gev
 ```
 
+## API Keys & Configuration
+
+God's Eye View uses a `.env` file at `apps/gods-eye-view/.env` for API keys:
+
+| Key | Required? | Purpose |
+|-----|-----------|---------|
+| `CESIUM_ION_TOKEN` | ✅ Included | CesiumJS 3D globe, terrain & satellite imagery |
+| `GOOGLE_MAPS_API_KEY` | Optional | Google Photorealistic 3D Tiles & place search |
+| `OPENAI_API_KEY` | Optional | Voice control & HUD summaries |
+| `FIRMS_MAP_KEY` | Optional | NASA FIRMS live active wildfire data |
+| `AISSTREAM_API_KEY` | Optional | Live AIS vessel tracking |
+| `TOMTOM_API_KEY` | Optional | Live traffic flow overlay |
+
+> **Note:** The app works without any optional keys — it falls back to Esri World Imagery + OSM.
+> To get a free Cesium Ion token: https://ion.cesium.com/tokens
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| `npm install` fails | Ensure Node.js >= 24.14.0: `node -v` |
+| Blank/black globe | Check WebGL support at `chrome://gpu` or try Chrome/Edge |
+| Port already in use | Kill existing processes: `lsof -i :5000 -t \| xargs kill` |
+| God's Eye View not loading | Try direct access at http://localhost:4173/gev/ |
+| World Monitor API warnings | ACLED/feed warnings are normal without API keys |
+
 ## Production Deployment
 
 A production Nginx reverse proxy template is provided in `deploy/nginx.conf`:
+
+```bash
+# Build both apps for production
+npm run build:all
+```
+
+The Nginx config:
 - Serves `landing/` at `/`
 - Routes `/world/` to World Monitor's static build (`dist/`)
 - Routes `/gev/` to God's Eye View's static build (`dist/`)

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WebGL Diagnostic</title>
+  <style>
+    body { background: #111; color: #eee; font-family: monospace; padding: 20px; }
+    .pass { color: #0f0; }
+    .fail { color: #f44; }
+    .warn { color: #fa0; }
+    pre { background: #222; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    h2 { border-bottom: 1px solid #333; padding-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <h1>WebGL Diagnostic Report</h1>
+  <div id="report"></div>
+  <canvas id="testCanvas" width="400" height="300" style="display:none;"></canvas>
+  <script>
+    const report = document.getElementById('report');
+    const canvas = document.getElementById('testCanvas');
+    
+    function log(msg, cls) {
+      const p = document.createElement('p');
+      p.className = cls || '';
+      p.innerHTML = msg;
+      report.appendChild(p);
+    }
+    
+    function section(title) {
+      const h = document.createElement('h2');
+      h.textContent = title;
+      report.appendChild(h);
+    }
+
+    // Test 1: WebGL1
+    section('WebGL1 Support');
+    let gl1 = null;
+    try {
+      gl1 = canvas.getContext('webgl', { failIfMajorPerformanceCaveat: false });
+      if (gl1) {
+        log('✅ WebGL1 context created successfully', 'pass');
+        log(`Renderer: ${gl1.getParameter(gl1.RENDERER)}`);
+        log(`Vendor: ${gl1.getParameter(gl1.VENDOR)}`);
+        log(`Version: ${gl1.getParameter(gl1.VERSION)}`);
+        log(`GLSL: ${gl1.getParameter(gl1.SHADING_LANGUAGE_VERSION)}`);
+        log(`Max Texture Size: ${gl1.getParameter(gl1.MAX_TEXTURE_SIZE)}`);
+        log(`Max Renderbuffer Size: ${gl1.getParameter(gl1.MAX_RENDERBUFFER_SIZE)}`);
+        log(`Max Viewport Dims: ${gl1.getParameter(gl1.MAX_VIEWPORT_DIMS)}`);
+        const ext = gl1.getExtension('WEBGL_debug_renderer_info');
+        if (ext) {
+          log(`Unmasked Renderer: ${gl1.getParameter(ext.UNMASKED_RENDERER_WEBGL)}`);
+          log(`Unmasked Vendor: ${gl1.getParameter(ext.UNMASKED_VENDOR_WEBGL)}`);
+        }
+        gl1.getExtension('WEBGL_lose_context')?.loseContext();
+      } else {
+        log('❌ WebGL1 context returned null', 'fail');
+      }
+    } catch(e) {
+      log(`❌ WebGL1 error: ${e.message}`, 'fail');
+    }
+
+    // Test 2: WebGL2
+    section('WebGL2 Support');
+    const canvas2 = document.createElement('canvas');
+    canvas2.width = 400; canvas2.height = 300;
+    let gl2 = null;
+    try {
+      gl2 = canvas2.getContext('webgl2', { failIfMajorPerformanceCaveat: false });
+      if (gl2) {
+        log('✅ WebGL2 context created successfully', 'pass');
+        log(`Renderer: ${gl2.getParameter(gl2.RENDERER)}`);
+        log(`Version: ${gl2.getParameter(gl2.VERSION)}`);
+        log(`GLSL: ${gl2.getParameter(gl2.SHADING_LANGUAGE_VERSION)}`);
+        log(`Max Texture Size: ${gl2.getParameter(gl2.MAX_TEXTURE_SIZE)}`);
+        log(`Max Samples (MSAA): ${gl2.getParameter(gl2.MAX_SAMPLES)}`);
+        log(`Max Color Attachments: ${gl2.getParameter(gl2.MAX_COLOR_ATTACHMENTS)}`);
+        log(`drawingBufferWidth: ${gl2.drawingBufferWidth}`);
+        log(`drawingBufferHeight: ${gl2.drawingBufferHeight}`);
+        
+        // Test stencil
+        const stencil = gl2.getParameter(gl2.STENCIL_BITS);
+        log(`Stencil Bits: ${stencil}`, stencil > 0 ? 'pass' : 'warn');
+        
+        // Test depth
+        const depth = gl2.getParameter(gl2.DEPTH_BITS);
+        log(`Depth Bits: ${depth}`, depth > 0 ? 'pass' : 'warn');
+
+        // Check context attributes
+        const attrs = gl2.getContextAttributes();
+        log(`<pre>Context Attributes: ${JSON.stringify(attrs, null, 2)}</pre>`);
+
+        gl2.getExtension('WEBGL_lose_context')?.loseContext();
+      } else {
+        log('❌ WebGL2 context returned null — THIS IS THE PROBLEM', 'fail');
+        log('Cesium 1.138+ requires WebGL2. Your GPU may not support it.', 'fail');
+      }
+    } catch(e) {
+      log(`❌ WebGL2 error: ${e.message}`, 'fail');
+    }
+
+    // Test 3: WebGL2 with MSAA (what Cesium requests)
+    section('WebGL2 with Cesium-like options');
+    const canvas3 = document.createElement('canvas');
+    canvas3.width = 400; canvas3.height = 300;
+    try {
+      const gl3 = canvas3.getContext('webgl2', {
+        alpha: false,
+        depth: true,
+        stencil: true,
+        antialias: false,
+        premultipliedAlpha: true,
+        preserveDrawingBuffer: true,
+        failIfMajorPerformanceCaveat: false,
+        powerPreference: 'default',
+      });
+      if (gl3) {
+        log('✅ WebGL2 with Cesium options: OK', 'pass');
+        log(`drawingBufferWidth: ${gl3.drawingBufferWidth}, drawingBufferHeight: ${gl3.drawingBufferHeight}`);
+        if (gl3.drawingBufferWidth === 0 || gl3.drawingBufferHeight === 0) {
+          log('⚠️ drawingBufferWidth/Height is 0 — this will cause Cesium to fail!', 'fail');
+        }
+        gl3.getExtension('WEBGL_lose_context')?.loseContext();
+      } else {
+        log('❌ WebGL2 with Cesium options: FAILED (null context)', 'fail');
+      }
+    } catch(e) {
+      log(`❌ Error: ${e.message}`, 'fail');
+    }
+
+    // Test 4: failIfMajorPerformanceCaveat
+    section('failIfMajorPerformanceCaveat Test');
+    const canvas4 = document.createElement('canvas');
+    canvas4.width = 400; canvas4.height = 300;
+    try {
+      const gl4a = canvas4.getContext('webgl2', { failIfMajorPerformanceCaveat: true });
+      if (gl4a) {
+        log('✅ WebGL2 with failIfMajorPerformanceCaveat=true: OK', 'pass');
+        gl4a.getExtension('WEBGL_lose_context')?.loseContext();
+      } else {
+        log('⚠️ WebGL2 FAILS with failIfMajorPerformanceCaveat=true — GPU is flagged as slow', 'warn');
+      }
+    } catch(e) {
+      log(`❌ Error: ${e.message}`, 'fail');
+    }
+
+    section('Browser & System');
+    log(`User Agent: ${navigator.userAgent}`);
+    log(`Platform: ${navigator.platform}`);
+    log(`Hardware Concurrency: ${navigator.hardwareConcurrency}`);
+    log(`Device Memory: ${navigator.deviceMemory || 'N/A'} GB`);
+  </script>
+</body>
+</html>

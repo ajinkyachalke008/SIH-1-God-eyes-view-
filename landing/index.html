@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Intel Platform // World Monitor & God's Eye View</title>
+  <meta name="description" content="Unified Operations Console combining World Monitor and God's Eye View under a single high-performance path-routed interface.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #07090e;
+      --bg-panel: rgba(13, 18, 28, 0.82);
+      --bg-panel-hover: rgba(18, 25, 38, 0.92);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(255, 255, 255, 0.2);
+      
+      --amber-glow: #f59e0b;
+      --amber-dim: #92400e;
+      --amber-bg: rgba(245, 158, 11, 0.08);
+      --amber-border: rgba(245, 158, 11, 0.35);
+
+      --green-glow: #00ff66;
+      --green-dim: #065f46;
+      --green-bg: rgba(0, 255, 102, 0.07);
+      --green-border: rgba(0, 255, 102, 0.35);
+
+      --cyan-glow: #00f0ff;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --text-dim: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Subtle Tactical Background Grid & Vignette */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 15%, rgba(16, 24, 39, 0) 0%, #07090e 85%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* Top Telemetry Header */
+    header {
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .top-telemetry-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .telemetry-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+    }
+
+    .status-pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green-glow);
+      box-shadow: 0 0 10px var(--green-glow);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .header-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .header-title-group h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-title-group p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      max-width: 650px;
+    }
+
+    .sys-badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      padding: 6px 14px;
+      border-radius: 4px;
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      color: var(--cyan-glow);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      align-self: flex-start;
+    }
+
+    /* Grid Layout for Apps */
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 28px;
+    }
+
+    /* Tactical Card Base */
+    .ops-card {
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px);
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      min-height: 480px;
+    }
+
+    .ops-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Amber Card (World Monitor) */
+    .card-world::before {
+      background: linear-gradient(90deg, transparent, var(--amber-glow), transparent);
+    }
+
+    .card-world:hover {
+      border-color: var(--amber-border);
+      background: var(--bg-panel-hover);
+      box-shadow: 0 12px 36px -10px rgba(245, 158, 11, 0.18);
+      transform: translateY(-3px);
+    }
+
+    .card-world .card-badge {
+      color: var(--amber-glow);
+      background: var(--amber-bg);
+      border-color: var(--amber-border);
+    }
+
+    .card-world .btn-launch {
+      background: var(--amber-glow);
+      color: #0b0f17;
+      border-color: var(--amber-glow);
+    }
+
+    .card-world .btn-launch:hover {
+      background: #fbbf24;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+    }
+
+    /* Green Card (God's Eye View) */
+    .card-gev::before {
+      background: linear-gradient(90deg, transparent, var(--green-glow), transparent);
+    }
+
+    .card-gev:hover {
+      border-color: var(--green-border);
+      background: var(--bg-panel-hover);
+      box-shadow: 0 12px 36px -10px rgba(0, 255, 102, 0.16);
+      transform: translateY(-3px);
+    }
+
+    .card-gev .card-badge {
+      color: var(--green-glow);
+      background: var(--green-bg);
+      border-color: var(--green-border);
+    }
+
+    .card-gev .btn-launch {
+      background: var(--green-glow);
+      color: #04120a;
+      border-color: var(--green-glow);
+    }
+
+    .card-gev .btn-launch:hover {
+      background: #34d399;
+      box-shadow: 0 0 20px rgba(0, 255, 102, 0.45);
+    }
+
+    /* Card Content Structure */
+    .card-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .card-badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 3px;
+      border: 1px solid transparent;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .card-route {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .card-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .card-subtitle {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* Capabilities list */
+    .capabilities-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .capabilities-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: var(--text-main);
+    }
+
+    .capabilities-list .bullet {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .capabilities-list li strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Tech Specs Pillbox */
+    .tech-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .spec-pill {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      padding: 3px 8px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Launch Button */
+    .btn-launch {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 5px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-launch svg {
+      transition: transform 0.2s ease;
+    }
+
+    .btn-launch:hover svg {
+      transform: translateX(4px);
+    }
+
+    /* Architecture & System Status Footer */
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .footer-block {
+      background: rgba(13, 18, 28, 0.4);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 16px 20px;
+    }
+
+    .footer-block h4 {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .footer-block p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .route-mapping {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      margin-top: 6px;
+    }
+
+    .route-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+
+    .route-row span:last-child {
+      color: var(--cyan-glow);
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 640px) {
+      .apps-grid {
+        grid-template-columns: 1fr;
+      }
+      .ops-card {
+        padding: 20px;
+        min-height: auto;
+      }
+      .header-main {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="top-telemetry-bar">
+        <div class="telemetry-tag">
+          <span class="status-pulse"></span>
+          <span>UNIFIED ROUTER: ACTIVE</span>
+        </div>
+        <div class="telemetry-tag">
+          <span>PORT: 5000</span>
+        </div>
+        <div class="telemetry-tag">
+          <span>HOST: LOCALHOST</span>
+        </div>
+        <div class="telemetry-tag" id="live-clock">
+          <span>UTC 00:00:00</span>
+        </div>
+      </div>
+
+      <div class="header-main">
+        <div class="header-title-group">
+          <h1>Unified Intel Platform</h1>
+          <p>Single front door routing to World Monitor and God's Eye View. Unmodified upstream codebases running independently behind a high-performance reverse proxy.</p>
+        </div>
+        <div class="sys-badge">
+          SURVEILLANCE OPS
+        </div>
+      </div>
+    </header>
+
+    <main class="apps-grid">
+      <!-- WORLD MONITOR CARD -->
+      <article class="ops-card card-world" id="card-worldmonitor">
+        <div>
+          <div class="card-header-bar">
+            <span class="card-badge">GEOPOLITICAL / MACRO OPS</span>
+            <span class="card-route">ROUTE /world/</span>
+          </div>
+
+          <h2 class="card-title">World Monitor</h2>
+          <p class="card-subtitle">Global intelligence aggregator and real-time situational awareness dashboard.</p>
+
+          <ul class="capabilities-list">
+            <li>
+              <span class="bullet">▶</span>
+              <span><strong>3D Globe & Flat Map:</strong> Dual globe.gl (Three.js) & deck.gl/MapLibre projection engine.</span>
+            </li>
+            <li>
+              <span class="bullet">▶</span>
+              <span><strong>Geopolitical Events:</strong> Real-time conflict hotspots, seismic monitors, & breaking news wires.</span>
+            </li>
+            <li>
+              <span class="bullet">▶</span>
+              <span><strong>Live Movement Radar:</strong> ADS-B aerial tracks & OpenSky/adsb.lol aircraft radar integration.</span>
+            </li>
+            <li>
+              <span class="bullet">▶</span>
+              <span><strong>Macro Economics:</strong> Financial signals, currency rates, energy, and commodity tracking.</span>
+            </li>
+          </ul>
+
+          <div class="tech-specs">
+            <span class="spec-pill">PORT :3000</span>
+            <span class="spec-pill">AGPL-3.0</span>
+            <span class="spec-pill">GLOBE.GL</span>
+            <span class="spec-pill">DECK.GL</span>
+            <span class="spec-pill">KEYLESS READY</span>
+          </div>
+        </div>
+
+        <a href="/world/" class="btn-launch" id="launch-world" aria-label="Enter World Monitor">
+          <span>Enter World Monitor</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </article>
+
+      <!-- GOD'S EYE VIEW CARD -->
+      <article class="ops-card card-gev" id="card-godseyeview">
+        <div>
+          <div class="card-header-bar">
+            <span class="card-badge">4D SENSOR FUSION / NVG</span>
+            <span class="card-route">ROUTE /gev/</span>
+          </div>
+
+          <h2 class="card-title">God's Eye View</h2>
+          <p class="card-subtitle">4D geospatial sensor fusion engine, tactical orbital radar, and situational HUD.</p>
+
+          <ul class="capabilities-list">
+            <li>
+              <span class="bullet">▶</span>
+              <span><strong>CesiumJS 3D Engine:</strong> Photorealistic terrain, 3D tiles, and orbital rendering.</span>
+            </li>
+            <li>
+              <span class="bullet">▶</span>
+              <span><strong>Multi-Domain Overlays:</strong> CelesTrak satellites, NASA FIRMS active fires, AIS vessels, & USGS tremors.</span>
+            </li>
+            <li>
+              <span class="bullet">▶</span>
+              <span><strong>Tactical NVG Mode:</strong> Phosphor-green Night Vision sensor mode with HUD telemetry.</span>
+            </li>
+            <li>
+              <span class="bullet">▶</span>
+              <span><strong>Live Feeds & Voice:</strong> CCTV traffic cameras, citizen radio streams, and optional voice agent.</span>
+            </li>
+          </ul>
+
+          <div class="tech-specs">
+            <span class="spec-pill">PORT :4173</span>
+            <span class="spec-pill">MIT LICENSE</span>
+            <span class="spec-pill">CESIUMJS</span>
+            <span class="spec-pill">4D SENSORS</span>
+            <span class="spec-pill">KEYLESS READY</span>
+          </div>
+        </div>
+
+        <a href="/gev/" class="btn-launch" id="launch-gev" aria-label="Enter God's Eye View">
+          <span>Enter God's Eye View</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </article>
+    </main>
+
+    <footer>
+      <div class="footer-grid">
+        <div class="footer-block">
+          <h4>Architecture & License Boundary</h4>
+          <p>Zero code mixing. World Monitor (AGPL-3.0) and God's Eye View (MIT) execute as isolated processes behind this reverse proxy. Upstream codebases remain 100% pristine.</p>
+        </div>
+        <div class="footer-block">
+          <h4>Routing Infrastructure</h4>
+          <div class="route-mapping">
+            <div class="route-row"><span>/</span> <span>Landing / Switcher</span></div>
+            <div class="route-row"><span>/world/</span> <span>localhost:3000 (WM)</span></div>
+            <div class="route-row"><span>/gev/</span> <span>localhost:4173 (GEV)</span></div>
+          </div>
+        </div>
+        <div class="footer-block">
+          <h4>Keyless Mode Status</h4>
+          <p>Both platforms load in native keyless mode without external keys. Additional provider keys (Cesium, Google Maps, OpenAI, AISStream) can be configured independently.</p>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const utcString = now.toUTCString().split(' ')[4];
+      const clockEl = document.getElementById('live-clock');
+      if (clockEl) {
+        clockEl.innerHTML = `<span>UTC ${utcString}</span>`;
+      }
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "unified-intel-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Shell that runs World Monitor and God's Eye View side by side, unmodified, under one domain.",
+  "scripts": {
+    "install:world": "npm install --prefix apps/worldmonitor",
+    "install:gev": "npm install --prefix apps/gods-eye-view",
+    "install:all": "npm run install:world && npm run install:gev && npm install",
+    "dev:world": "npm run dev --prefix apps/worldmonitor -- --base=/world/",
+    "dev:gev": "npm run dev --prefix apps/gods-eye-view -- --base=/gev/",
+    "dev:proxy": "node scripts/dev-proxy.mjs",
+    "dev:all": "concurrently -n world,gev,proxy -c amber,green,cyan \"npm run dev:world\" \"npm run dev:gev\" \"npm run dev:proxy\"",
+    "build:world": "npm run build:full --prefix apps/worldmonitor",
+    "build:gev": "npm run build --prefix apps/gods-eye-view",
+    "build:all": "npm run build:world && npm run build:gev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "express": "^4.19.2",
+    "http-proxy-middleware": "^3.0.0",
+    "puppeteer": "^25.10.0",
+    "sharp": "^0.35.4"
+  }
+}

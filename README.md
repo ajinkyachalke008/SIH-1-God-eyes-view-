@@ -2,6 +2,7 @@
 
 A unified operations console serving two independent open-source intelligence platforms side by side under one domain without modifying either codebase:
 
+
 - **World Monitor** (`koala73/worldmonitor`, AGPL-3.0-only): Real-time geopolitical aggregator, 3D globe (globe.gl) and flat map (deck.gl/MapLibre), conflict feeds, macro signals, and flight/vessel tracking.
 
 

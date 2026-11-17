@@ -6,7 +6,6 @@ A unified operations console serving two independent open-source intelligence pl
 - **World Monitor** (`koala73/worldmonitor`, AGPL-3.0-only): Real-time geopolitical aggregator, 3D globe (globe.gl) and flat map (deck.gl/MapLibre), conflict feeds, macro signals, and flight/vessel tracking.
 
 
-
 - **God's Eye View** (`bilawalsidhu/gods-eye-view`, MIT): 4D geospatial sensor fusion engine, CesiumJS 3D terrain and orbital tracking (satellites, wildfires, earthquakes, live CCTV, radio streams, tactical NVG mode).
 
 ```
